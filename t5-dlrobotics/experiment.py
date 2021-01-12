@@ -1,6 +1,6 @@
 import yaml
 
-from constants import *
+import dict_helpers
 
 
 
@@ -9,6 +9,13 @@ class Experiment:
     def __init__(self, config_path):
         self.cfg = load_config(config_path)  # self.cfg is a multilevel dictionary
         self.name = self.cfg['name']
+
+    def setup(self):
+
+        self.hyperparams = self.cfg['hyperparameters']
+        self.algo = self.cfg['algorithm']
+
+        self.model = dict_helpers.ALGORITHMS[self.algo](**self.hyperparams)
 
 
 def load_config(path):
