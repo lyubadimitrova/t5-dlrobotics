@@ -23,6 +23,7 @@ def main():
     exp.run()
 
     # TODO: save results?
+    exp.save_final()
    
 
 if __name__ == "__main__":

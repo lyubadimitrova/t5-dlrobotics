@@ -1,7 +1,8 @@
 name: "ppo-reacher"
 
 env: "Reacher-v2"   # case sensitive; TODO: should probably specify mujoco? 
-algorithm: "ppo"    # TODO: will be run with stable-baselines or not? 
+algorithm: "ppo"    # TODO: will be run with stable-baselines or not?
+episodic: True
 
 hyperparameters: # algo-specific (below for PPO, tuned with RL Zoo)
   env_wrapper: sb3_contrib.common.wrappers.TimeFeatureWrapper
@@ -21,5 +22,4 @@ hyperparameters: # algo-specific (below for PPO, tuned with RL Zoo)
   vf_coef: 0.7
 
 
--5.8007818 {'batch_size': 256, 'n_steps': 1024, 'gamma': 0.99, 'lr': 0.0008497556794155835, 'ent_coef': 2.032834253352515e-08, 'clip_range': 0.1, 'n_epochs': 1, 'gae_lambda': 0.98, 'max_grad_norm': 0.9, 'vf_coef': 0.7013102291787603, 'net_arch': 'medium', 'activation_fn': 'relu'}
 
