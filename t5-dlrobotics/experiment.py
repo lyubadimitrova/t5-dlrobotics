@@ -41,5 +41,3 @@ def load_config(path):
 
 
 
-env = gym.make("ALRReacherEnv")
-
