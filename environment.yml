@@ -95,4 +95,4 @@ dependencies:
     - werkzeug==1.0.1
     - wrapt==1.12.1
     - zipp==3.4.0
-prefix: /home/lyuba/anaconda3/envs/spinningup
+prefix: /home/lyuba/anaconda3/envs/robotics

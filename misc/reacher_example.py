@@ -5,8 +5,18 @@ from stable_baselines.sac.policies import MlpPolicy as SAC_mlp
 from stable_baselines.common.vec_env import DummyVecEnv, VecNormalize
 from stable_baselines import PPO2, SAC
 
+import sys
+
+
+
 # TODO: hyperparameter setting, for example RL zoo
 env = gym.make('Reacher-v2')
+print(env.init_qpos)
+print(env.init_qvel)
+
+
+sys.exit()
+
 # Optional: PPO2 requires a vectorized environment to run
 # the env is now wrapped automatically when passing it to the constructor
 env = DummyVecEnv([lambda: env])
@@ -17,7 +27,9 @@ model = PPO2(PPO_mlp, env) #, verbose=1, n_steps=2048, ent_coef=0.0, learning_ra
 #model = SAC(SAC_mlp, env, verbose=1)
 model.learn(total_timesteps=20000)
 
-obs = env.reset()
+
+
+#obs = env.reset()
 for i in range(100000):
     action, _states = model.predict(obs)
     obs, rewards, dones, info = env.step(action)
