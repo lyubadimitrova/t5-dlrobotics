@@ -22,4 +22,3 @@ hyperparameters: # algo-specific (below for PPO, tuned with RL Zoo)
   vf_coef: 0.7
 
 
-
