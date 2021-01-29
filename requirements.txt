@@ -1,0 +1,6 @@
+-e git+https://github.com/maxhuettenrauch/mp_lib.git#egg=mp_lib
+-e git+https://github.com/lyubadimitrova/alr_envs.git@dmp_env_dev#egg=alr_envs
+cma
+pyyaml
+
+
