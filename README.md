@@ -7,4 +7,4 @@ Authors: Dimitrova, Lyubomira & Gong, Yuhe
 
 ### Running
 
-`python -m t5-dlrobotics path/to/config/file`
+`python -m t5 path/to/config/file`

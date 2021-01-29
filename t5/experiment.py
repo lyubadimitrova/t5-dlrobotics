@@ -41,8 +41,8 @@ class Experiment:
         vecenv_params = self.env_params.get('vecenv_params', {})
         vecenv_params = parse_params(vecenv_params)
 
-        self.env = make_vec_env(self.build_wrap_env, self.n_envs, 
-                                vectorizer=vectorizer, hyperparams=vecenv_params)
+        self.env = make_env(self.build_wrap_env, self.n_envs, 
+                            vectorizer=vectorizer, hyperparams=vecenv_params)
 
         self.build_vec_wrappers()
 
@@ -54,7 +54,11 @@ class Experiment:
 
     def run(self):
         self.model.learn(self.total_timesteps)
-        test_env = self.env.env_fns[0]()
+
+        self.env.close()
+        #print('model.algo.mean', self.model.algo.mean)
+
+        test_env = make_env(self.build_wrap_env)()
         test_env.rollout(self.model.algo.mean, render=True)
 
 
@@ -87,16 +91,19 @@ class Experiment:
    
 
 
-def make_vec_env(creator, n_envs, hyperparams={}, vectorizer=DummyVecEnv, base_seed=0):
+def make_env(creator, n_envs=1, hyperparams={}, vectorizer=None, base_seed=0):
     
-    def make_env(rank):
+    def maker(rank):
         def _init():
             env = creator()
             env.seed(base_seed + rank)
             return env
         return _init
 
-    return vectorizer(env_fns=[make_env(i) for i in range(n_envs)], **hyperparams)
+    if vectorizer is None:
+        return maker(0) 
+
+    return vectorizer(env_fns=[maker(i) for i in range(n_envs)], **hyperparams)
 
 
 def parse_params(params_dict):
@@ -128,7 +135,6 @@ def load_config(filepath):
     """
     Loads the configuration file on filepath into a Python dictionary.
     """
-    import yaml
     
     with open(filepath, 'r') as ymlfile:
         cfg = yaml.safe_load(ymlfile)

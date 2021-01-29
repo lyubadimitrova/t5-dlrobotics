@@ -7,8 +7,8 @@ env_params:
     - alr_envs.utils.dmp_env_wrapper.DmpEnvWrapperVel
   wrapper_params:
     - ''
-    - 'num_dof:2 num_basis:5 duration:0.5 dt:0.01 learn_goal:True'
-  n_envs: 8
+    - 'num_dof:2 num_basis:5 duration:1 dt:0.02 learn_goal:True'
+  n_envs: 1
   vecenv_params:
     n_samples: 14
     context: 'spawn'
@@ -21,7 +21,7 @@ algo_params:
     popsize: 14
   init_sigma: 0.1
 
-n_timesteps: 1000
+n_timesteps: 600
 
 
 

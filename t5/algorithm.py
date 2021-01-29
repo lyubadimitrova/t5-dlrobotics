@@ -29,15 +29,14 @@ class CMA:
         opt = 1e10
         print_freq = 10
 
-        print(self.env)
-        while t <= 300 and opt > 1e-8: #total_timesteps
+        #print(self.env)
+        while t <= total_timesteps and opt > 1e-8: #total_timesteps
             
             if self.verbose and t % print_freq == 0:
                 print("Iteration {}/{} ----------- Result: {}".format(t, total_timesteps, opt))
 
             # sample parameters to test
             solutions = self.algo.ask()
-            #print(solutions)
             # collect rollouts with parameters, need to negate because cma-es minimizes
             fitness = -self.env(np.vstack(solutions))[0] # fitness is the reward, [0] because rollout now returns infos as well
             # update search distribution
@@ -47,6 +46,7 @@ class CMA:
             self.opts.append(opt)
 
             t += 1
+
 
 
     def _get_xstart(self):
