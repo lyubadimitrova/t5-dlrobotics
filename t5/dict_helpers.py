@@ -5,4 +5,4 @@ import t5.algorithm
 
 ALGORITHMS = {'ppo': stable_baselines3.PPO, 'cma': t5.algorithm.CMA}
 
-VECTORIZERS = {'ppo':DummyVecEnv, 'cma':DmpAsyncVectorEnv}
+VECTORIZERS = {'ppo': DummyVecEnv, 'cma': DmpAsyncVectorEnv}

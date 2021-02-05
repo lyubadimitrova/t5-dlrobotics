@@ -21,13 +21,13 @@ class CmaReacherWrapper(gym.Wrapper):
         self.actions_taken = []
 
         self._steps = 0
-        #print('frame skip: ', self.env.frame_skip)
+        # print('frame skip: ', self.env.frame_skip)
 
     def step(self, vel):
         
-        #self.actions_taken.append(vel)
-        #print(vel)
-        #print('jv ', self.joint_vels)
+        # self.actions_taken.append(vel)
+        # print(vel)
+        # print('jv ', self.joint_vels)
         old_vel = self.joint_vels
         acc = (vel - old_vel) / self.dt
 
@@ -37,11 +37,10 @@ class CmaReacherWrapper(gym.Wrapper):
         self.do_simulation(acc, self.frame_skip) 
         done = self._steps * self.dt > self.time_limit
 
-        
-        self.qvels.append(self.sim.data.qvel)
-        self.qposs.append(self.sim.data.qpos)
+        self.qvels.append(self.sim.data.qvel.flat[:])
+        self.qposs.append(self.sim.data.qpos.flat[:])
 
-        #print(self._steps)
+        # print(self._steps)
         return self._get_obs().copy(), reward, done, None
 
     def _reward(self, vel, acc):
@@ -51,8 +50,8 @@ class CmaReacherWrapper(gym.Wrapper):
             reward = np.linalg.norm(self._dist_to_goal())  # dist reward
 
         reward = - reward ** 2
-        #reward -= np.square(vel).sum()
-        #reward -= 1e-6 * np.sum(acc**2)  # penalize high accelerations
+        # reward -= np.square(vel).sum()
+        # reward -= 1e-6 * np.sum(acc**2)  # penalize high accelerations
         reward -= 1e-6 * np.square(acc).sum()
         if self._steps == 40:
             reward -= 0.001 * np.sum(vel**2) ** 2  # fingertip not moving too fast
@@ -77,17 +76,16 @@ class CmaReacherWrapper(gym.Wrapper):
         self.qposs = [self.init_qpos]
         self.actions_taken = []
         self.xvelrs = []
+        self.xvelps = []
 
         self._steps = 0
-        qpos = self.init_qpos #np.array([0., 0., 0.1, -0.1])
-        qvel = self.init_qvel #np.array([0., 0., 0., 0.])
+        qpos = self.init_qpos  # np.array([0., 0., 0.1, -0.1])
+        qvel = self.init_qvel  # np.array([0., 0., 0., 0.])
         self.set_state(qpos, qvel)
 
         return self._get_obs()
 
-
     def _get_obs(self):
-
         theta = self.sim.data.qpos.flat[:2]
         return np.concatenate([
           np.cos(theta),
