@@ -1,6 +1,7 @@
 import yaml
 import gym
 import importlib
+from pathlib import Path
 
 import t5.dict_helpers as dict_helpers
 
@@ -9,7 +10,7 @@ class Experiment:
 
     def __init__(self, config_path):
         self.cfg = load_config(config_path)  # self.cfg is a multilevel dictionary
-        self.name = self.cfg['name']
+        self.save_dir, self.plots_dir = make_experiment_dir(self.cfg)
 
         self.total_timesteps = self.cfg['n_timesteps']
 
@@ -47,9 +48,11 @@ class Experiment:
 
         self.env.close()
         # print('model.algo.mean', self.model.algo.mean)
+        self.model.save_model(self.save_dir)
 
+    def test_learned(self, save=True):
         test_env = make_env(self.build_wrap_env)()
-        test_env.rollout(self.model.algo.mean, render=True)
+        test_env.rollout(self.model.algo.mean, render=True, out=self.plots_dir)
 
     def build_wrap_env(self):
         env = gym.make(self.env_name)
@@ -120,3 +123,13 @@ def load_config(filepath):
     with open(filepath, 'r') as ymlfile:
         cfg = yaml.safe_load(ymlfile)
     return cfg
+
+
+def make_experiment_dir(cfg):
+
+    exist_ok = True if cfg["overwrite"] else False
+    model_dir = Path(cfg["save_path"]) / cfg["name"]
+    model_dir.mkdir(parents=True, exist_ok=exist_ok)
+    (model_dir / "images").mkdir(exist_ok=exist_ok)
+
+    return model_dir, model_dir / "images"

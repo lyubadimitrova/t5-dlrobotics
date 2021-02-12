@@ -29,16 +29,20 @@ class CmaReacherWrapper(gym.Wrapper):
         # print(vel)
         # print('jv ', self.joint_vels)
         old_vel = self.joint_vels
-        acc = (vel - old_vel) / self.dt
+        acc = (vel - old_vel) #/ 200
 
         self.xvelrs.append(old_vel)
         reward = self._reward(vel, acc)
         self._steps += 1
-        self.do_simulation(acc, self.frame_skip) 
+
+        # normalize action
+        # acc = np.tanh(acc)
+        self.do_simulation(acc, self.frame_skip)
+
         done = self._steps * self.dt > self.time_limit
 
-        self.qvels.append(self.sim.data.qvel.flat[:])
-        self.qposs.append(self.sim.data.qpos.flat[:])
+        self.qvels.append(self._qvel)
+        self.qposs.append(self._qpos)
 
         # print(self._steps)
         return self._get_obs().copy(), reward, done, None
@@ -54,13 +58,17 @@ class CmaReacherWrapper(gym.Wrapper):
         # reward -= 1e-6 * np.sum(acc**2)  # penalize high accelerations
         reward -= 1e-6 * np.square(acc).sum()
         if self._steps == 40:
-            reward -= 0.001 * np.sum(vel**2) ** 2  # fingertip not moving too fast
+            reward -= 0.1 * np.sum(vel**2) ** 2  # fingertip not moving too fast
 
         return reward
 
     @property
     def _qvel(self):
-        return self.sim.data.qvel.flat[:2]
+        return self.sim.data.qvel.flat[:]
+
+    @property
+    def _qpos(self):
+        return self.sim.data.qpos.flat[:]
 
     @property
     def joint_vels(self):

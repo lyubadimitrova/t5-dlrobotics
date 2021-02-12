@@ -1,4 +1,6 @@
 name: "cma-reacher"
+overwrite: True
+save_path: "experiments"
 
 env: "Reacher-v2"
 env_params:
@@ -21,7 +23,7 @@ algo_params:
     popsize: 14
   init_sigma: 0.1
 
-n_timesteps: 600
+n_timesteps: 500
 
 
 

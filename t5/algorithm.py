@@ -1,4 +1,4 @@
-import cma
+from pathlib import Path
 import numpy as np
 import matplotlib.pyplot as plt
 from stable_baselines3 import PPO
@@ -24,7 +24,7 @@ class CMA:
 
         self.opts = []
 
-    def learn(self, total_timesteps, opt=1e-8):
+    def learn(self, total_timesteps):
         t = 1
         opt = 1e10
         print_freq = 10
@@ -56,6 +56,10 @@ class CMA:
                 x_start[i] = -np.pi / 4
 
         return x_start
+
+    def save_model(self, path):
+        np.save(path / 'algo_mean.npy', self.algo.mean)
+        np.save(path / 'opts.npy', self.opts)
 
     def plot_curve(self, max_value=None, min_value=None, save=None):
         plt.figure()
