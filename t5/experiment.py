@@ -14,6 +14,7 @@ class Experiment:
     def __init__(self, config_path):
         self.cfg = load_config(config_path)  # self.cfg is a multilevel dictionary
         self.save_dir = make_experiment_dir(self.cfg)
+        shutil.copyfile(config_path, self.save_dir / 'config.yml')
 
         self.total_timesteps = self.cfg['n_timesteps']
 
