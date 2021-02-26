@@ -1,26 +1,25 @@
-from pathlib import Path
 import numpy as np
 import matplotlib.pyplot as plt
-from stable_baselines3 import PPO
+import stable_baselines3 as sb3
 from cma import CMAEvolutionStrategy
 
 
 class CMA:
 
-    def __init__(self, env, inopts, init_sigma, x_start=None, verbose=True):
+    def __init__(self, env, hyperparams):
 
         self.env = env
-        self.init_sigma = init_sigma
+        self.init_sigma = hyperparams.get('init_sigma', 0.1)
 
-        if x_start is not None:
-            self.x_start = x_start
+        if hyperparams.get('x_start', False):
+            self.x_start = hyperparams['x_start']
         else:
             self.x_start = self._get_xstart()
 
-        self.inopts = inopts
+        self.inopts = hyperparams.get('inopts', None)
 
         self.algo = CMAEvolutionStrategy(x0=self.x_start, sigma0=self.init_sigma, inopts=self.inopts)
-        self.verbose = verbose
+        self.verbose = hyperparams.get('verbose', True)
 
         self.opts = []
 
@@ -32,7 +31,7 @@ class CMA:
         while t <= total_timesteps and opt > 1e-8:
 
             if self.verbose and t % print_freq == 0:
-                print("Iteration {}/{} ----------- Result: {}".format(t, total_timesteps, opt))
+                print("Iteration {:>3}/{} ----------- Result: {}".format(t, total_timesteps, opt))
 
             # sample parameters to test
             solutions = self.algo.ask()
@@ -83,20 +82,11 @@ class CMA:
 class PPO:
 
     def __init__(self, env, hyperparams):
-        # policy='MlpPolicy',
-        #         batch_size=256,
-        #         n_steps=1024,
-        #         gamma=0.99,
-        #         gae_lambda=0.98,
-        #         n_epochs=10,
-        #         ent_coef=0.0,
-        #         learning_rate=8.e-4,
-        #         clip_range=0.1,
-        #         max_grad_norm=0.9,
-        #         vf_coef=0.7):
-
         self.env = env
-        self.algo = PPO(env=env, **hyperparams)
+        self.algo = sb3.PPO(env=env, **hyperparams)
 
-    def learn(self):
-        pass
+    def learn(self, total_timesteps):
+        self.algo.learn(total_timesteps=total_timesteps)
+
+    def save_model(self, path):
+        self.algo.save(path / 'model')
