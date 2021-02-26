@@ -1,16 +1,19 @@
 import yaml
 import gym
 import importlib
+import time
 from pathlib import Path
 
 import t5.dict_helpers as dict_helpers
+from stable_baselines3.common.evaluation import evaluate_policy
+from stable_baselines3.common.vec_env import VecNormalize
 
 
 class Experiment:
 
     def __init__(self, config_path):
         self.cfg = load_config(config_path)  # self.cfg is a multilevel dictionary
-        self.save_dir, self.plots_dir = make_experiment_dir(self.cfg)
+        self.save_dir = make_experiment_dir(self.cfg)
 
         self.total_timesteps = self.cfg['n_timesteps']
 
@@ -26,33 +29,52 @@ class Experiment:
 
         self.wrappers = self.env_params['wrappers']
         self.wrapper_params = self.env_params['wrapper_params']
+
+        self.built_wrappers = []
+        self.built_wrapper_params = []
         self.parse_wrappers()
 
         self.n_envs = self.env_params.get('n_envs', 1)
 
-        vectorizer = dict_helpers.VECTORIZERS[algo]
+        self.vectorizer = dict_helpers.VECTORIZERS[algo]
         vecenv_params = self.env_params.get('vecenv_params', {})
         vecenv_params = parse_params(vecenv_params)
 
         self.env = make_env(self.build_wrap_env, self.n_envs,
-                            vectorizer=vectorizer, hyperparams=vecenv_params)
+                            vectorizer=self.vectorizer, hyperparams=vecenv_params)
 
         self.build_vec_wrappers()
 
-        self.model = self.algo(env=self.env, **self.cfg['algo_params'])
+        self.model = self.algo(env=self.env, hyperparams=self.cfg['algo_params'])
+
+        # self.eval_function =
 
         # TODO: logging (path & tensorboard)
 
     def run(self):
         self.model.learn(self.total_timesteps)
-
         self.env.close()
-        # print('model.algo.mean', self.model.algo.mean)
-        self.model.save_model(self.save_dir)
 
-    def test_learned(self, save=True):
+    def save(self):
+        self.model.save_model(self.save_dir)
+        if isinstance(self.env, VecNormalize):
+            self.env.save(self.save_dir / 'vecnormalize.pkl')
+
+    def test_learned(self):
         test_env = make_env(self.build_wrap_env)()
-        test_env.rollout(self.model.algo.mean, render=True, out=self.plots_dir)
+        if hasattr(test_env, 'rollout'):
+            reward, _ = test_env.rollout(self.model.algo.mean, render=True)
+        else:
+            test_env = make_env(self.build_wrap_env, vectorizer=self.vectorizer)
+            test_env = VecNormalize.load(self.save_dir / "vecnormalize.pkl", test_env)
+            test_env.training = False
+            test_env.norm_reward = False
+            reward, _ = evaluate_policy(self.model.algo, test_env,
+                                        n_eval_episodes=10, render=True, deterministic=True, warn=False)
+
+        print('Episode reward: ', reward)
+        test_env.close()
+        return reward
 
     def build_wrap_env(self):
         env = gym.make(self.env_name)
@@ -62,8 +84,6 @@ class Experiment:
         return env
 
     def parse_wrappers(self):
-        self.built_wrappers = []
-        self.built_wrapper_params = []
         for i in range(len(self.wrappers)):
             if self.wrappers[i] is not None:
                 self.built_wrappers.append(resolve_import(self.wrappers[i]))
@@ -127,9 +147,8 @@ def load_config(filepath):
 
 def make_experiment_dir(cfg):
 
-    exist_ok = True if cfg["overwrite"] else False
-    model_dir = Path(cfg["save_path"]) / cfg["name"]
+    exist_ok = cfg.get("overwrite", False)
+    model_dir = Path(cfg["save_path"]) / (cfg["name"] + time.strftime("%Y%m%d-%H%M%S"))
     model_dir.mkdir(parents=True, exist_ok=exist_ok)
-    (model_dir / "images").mkdir(exist_ok=exist_ok)
 
-    return model_dir, model_dir / "images"
+    return model_dir
