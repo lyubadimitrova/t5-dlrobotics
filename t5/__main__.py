@@ -23,8 +23,10 @@ def main():
     # run experiment
     exp.run()
 
-    # TODO: save results?
-    #exp.save_final()
+    exp.save()
+
+    exp.test_learned()
+
    
 
 if __name__ == "__main__":
