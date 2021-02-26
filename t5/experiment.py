@@ -3,6 +3,7 @@ import gym
 import importlib
 import time
 from pathlib import Path
+import shutil
 
 import t5.dict_helpers as dict_helpers
 from stable_baselines3.common.evaluation import evaluate_policy
