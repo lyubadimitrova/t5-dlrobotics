@@ -6,10 +6,10 @@ env: "Reacher-v2"
 env_params:
   wrappers:
     - t5.wrappers.CmaReacherWrapper
-    - alr_envs.utils.dmp_env_wrapper.DmpEnvWrapperVel
+    - alr_envs.utils.dmp_env_wrapper.DmpEnvWrapper
   wrapper_params:
     - ''
-    - 'num_dof:2 num_basis:5 duration:1 dt:0.02 learn_goal:True'
+    - 'num_dof:2 num_basis:5 duration:1 learn_goal:True policy_type:"motor" alpha_phase:3 p_gains:0.1 d_gains:0.1'
   n_envs: 1
   vecenv_params:
     n_samples: 14
@@ -23,7 +23,7 @@ algo_params:
     popsize: 14
   init_sigma: 0.1
 
-n_timesteps: 500
+n_timesteps: 20
 
 
 
