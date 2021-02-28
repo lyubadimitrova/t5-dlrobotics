@@ -1,0 +1,29 @@
+name: "ppo-reacher-fixed"
+save_path: "experiments"
+
+env: 'FixedTargetReacher-v2'
+env_params:
+  wrappers:
+    - sb3_contrib.common.wrappers.TimeFeatureWrapper
+    - stable_baselines3.common.vec_env.VecNormalize
+  wrapper_params:
+    - ''
+    - 'gamma:0.99'
+  n_envs: 8
+  
+algorithm: "ppo"   
+algo_params: 
+  policy: 'MlpPolicy'
+  batch_size: 16
+  n_steps: 128
+  gamma: 0.99
+  gae_lambda: 0.95
+  n_epochs: 5
+  ent_coef: 0.0
+  learning_rate: 4.e-4
+  clip_range: 0.2
+  max_grad_norm: 0.3
+  vf_coef: 0.5
+  verbose: 1
+
+n_timesteps: 5.e+4
