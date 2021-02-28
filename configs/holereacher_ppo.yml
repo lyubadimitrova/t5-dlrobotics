@@ -11,19 +11,18 @@ env_params:
     - 'gamma:0.99'
   n_envs: 8
   
-algorithm: "ppo"   
-algo_params: 
+algo_params:
   policy: 'MlpPolicy'
-  batch_size: 8
-  n_steps: 64
+  batch_size: 16
+  n_steps: 128
   gamma: 0.99
-  gae_lambda: 1.0
-  n_epochs: 5
-  ent_coef: 2.e-4
-  learning_rate: 2.e-4
-  clip_range: 0.4
-  max_grad_norm: 5
-  vf_coef: 0.42
+  gae_lambda: 0.95
+  n_epochs: 10
+  ent_coef: 0.0
+  learning_rate: 0.0001
+  clip_range: 0.2
+  max_grad_norm: 0.5
+  vf_coef: 0.5
   verbose: 1
 
-n_timesteps: 1.e+6
+n_timesteps: 2e7
