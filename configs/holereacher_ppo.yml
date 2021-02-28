@@ -26,4 +26,4 @@ algo_params:
   vf_coef: 0.5
   verbose: 1
 
-n_timesteps: 2e7
+n_timesteps: 2.e+7
