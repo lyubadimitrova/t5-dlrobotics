@@ -28,8 +28,6 @@ class Experiment:
         self.env_name = self.cfg['env']
         self.env_params = self.cfg['env_params']
 
-        self.env = gym.make(self.env_name)
-
         self.wrappers = self.env_params['wrappers']
         self.wrapper_params = self.env_params['wrapper_params']
 
@@ -83,6 +81,13 @@ class Experiment:
             if 'vec' not in self.wrappers[i].lower():  # ignore vecenv wrappers for now
                 env = self.built_wrappers[i](env, **self.built_wrapper_params[i])
         return env
+
+    # def build_env_from_string_or_custom(self):
+    #     try:
+    #         env = resolve_import(self.env_name)()   # custom env can be imported; TODO: register custom envs
+    #     except NameError:
+    #         env = gym.make(self.env_name)
+    #     return env
 
     def parse_wrappers(self):
         for i in range(len(self.wrappers)):
