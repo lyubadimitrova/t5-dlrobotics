@@ -10,7 +10,8 @@ env_params:
     - ''
     - 'gamma:0.99'
   n_envs: 8
-  
+
+algorithm: "ppo"
 algo_params:
   policy: 'MlpPolicy'
   batch_size: 16
