@@ -119,5 +119,5 @@ class PPO(Algo):
 
     def evaluate_model(self, test_env):
         reward, _ = evaluate_policy(self.algo, test_env,
-                                    n_eval_episodes=10, render=True, deterministic=True, warn=False)
+                                    n_eval_episodes=1, render=True, deterministic=True, warn=False)
         return reward
