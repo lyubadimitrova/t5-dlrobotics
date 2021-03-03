@@ -8,7 +8,7 @@ env_params:
     - alr_envs.utils.dmp_env_wrapper.DmpEnvWrapper
   wrapper_params:
     - 'num_dof:5 num_basis:5 duration:2 learn_goal:True policy_type:"velocity" alpha_phase:2'
-  n_envs: 1
+  n_envs: 8
   vecenv_params:
     n_samples: 14
     context: 'spawn'

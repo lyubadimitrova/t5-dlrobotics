@@ -15,7 +15,7 @@ algorithm: "ppo"
 algo_params: 
   policy: 'MlpPolicy'
   batch_size: 16
-  n_steps: 128
+  n_steps: 150
   gamma: 0.99
   gae_lambda: 0.95
   n_epochs: 5
@@ -26,4 +26,4 @@ algo_params:
   vf_coef: 0.5
   verbose: 1
 
-n_timesteps: 5.e+4
+n_timesteps: 1.e+5

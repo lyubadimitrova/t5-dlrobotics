@@ -10,7 +10,7 @@ env_params:
   wrapper_params:
     - ''
     - 'num_dof:2 num_basis:5 duration:1 learn_goal:True policy_type:"motor" alpha_phase:3 p_gains:0.1 d_gains:0.1'
-  n_envs: 1
+  n_envs: 8
   vecenv_params:
     n_samples: 14
     context: 'spawn'
