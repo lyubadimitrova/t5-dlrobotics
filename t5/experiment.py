@@ -1,15 +1,13 @@
-import yaml
 import gym
 import importlib
-import time
-from pathlib import Path
 import shutil
+import time
+import yaml
+from pathlib import Path
+from stable_baselines3.common.vec_env import VecNormalize
 
 import t5.dict_helpers as dict_helpers
 from t5.algorithm import CMA, PPO
-
-from stable_baselines3.common.vec_env import VecNormalize
-
 
 class Experiment:
 
@@ -46,7 +44,7 @@ class Experiment:
 
         self.build_vec_wrappers()
 
-        self.model = self.algo_class(env=self.env, hyperparams=self.cfg['algo_params'])
+        self.model = self.algo_class(env=self.env, env_name=self.env_name, hyperparams=self.cfg['algo_params'])
 
         # self.eval_function =
 
