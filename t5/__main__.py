@@ -30,10 +30,8 @@ def main():
         exp.test_learned()
     else:              # run experiment
         exp.run()
-        exp.save()
         exp.test_learned()
 
-   
 
 if __name__ == "__main__":
     main()

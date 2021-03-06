@@ -3,11 +3,13 @@ import importlib
 import shutil
 import time
 import yaml
+import sys
 from pathlib import Path
 from stable_baselines3.common.vec_env import VecNormalize
 
 import t5.dict_helpers as dict_helpers
 from t5.algorithm import CMA, PPO
+
 
 class Experiment:
 
@@ -15,6 +17,7 @@ class Experiment:
         self.cfg_path = config_path
         self.cfg = load_config(config_path)  # self.cfg is a multilevel dictionary
         self.model_dir = None
+        self.tb_dir = None
 
         self.total_timesteps = self.cfg['n_timesteps']
 
@@ -48,18 +51,16 @@ class Experiment:
 
         # self.eval_function =
 
-        # TODO: logging (path & tensorboard)
-
     def load(self, model_path):
         self.model_dir = Path(model_path)
         self.model.load_model(self.model_dir)
 
     def run(self):
-        self.model.learn(self.total_timesteps)
-        # self.env.close()
+        self.model_dir, self.tb_dir = make_experiment_dirs(self.cfg)
+        self.model.learn(self.total_timesteps, self.tb_dir)
+        self.save()
 
     def save(self):
-        self.model_dir = make_experiment_dir(self.cfg)
         shutil.copyfile(self.cfg_path, self.model_dir / 'config.yml')
 
         self.model.save_model(self.model_dir)
@@ -162,10 +163,12 @@ def load_config(filepath):
     return cfg
 
 
-def make_experiment_dir(cfg):
+def make_experiment_dirs(cfg):
 
     exist_ok = cfg.get("overwrite", False)
     model_dir = Path(cfg["save_path"]) / (cfg["name"] + time.strftime("%Y%m%d-%H%M%S"))
     model_dir.mkdir(parents=True, exist_ok=exist_ok)
+    # tb_dir = model_dir / 'tensorboard'
+    # tb_dir.mkdir(exist_ok=exist_ok)
 
-    return model_dir
+    return model_dir, model_dir #tb_dir
