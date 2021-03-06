@@ -1,17 +1,18 @@
 import time
 import os
-import re
+from pathlib import Path
 import numpy as np
 import matplotlib.pyplot as plt
 import stable_baselines3 as sb3
 from stable_baselines3.common.evaluation import evaluate_policy
+from stable_baselines3.common.utils import safe_mean
 from stable_baselines3.common import logger
 from torch.utils.tensorboard import SummaryWriter
 from cma import CMAEvolutionStrategy
 
 
 class Algo:
-    def learn(self, total_timesteps):
+    def learn(self, total_timesteps, tb_dir):
         raise NotImplementedError
 
     def save_model(self, path):
@@ -38,38 +39,23 @@ class CMA(Algo):
             self.x_start = self._get_xstart()
 
         self.inopts = hyperparams.get('inopts', None)
+        self.popsize = self.inopts['popsize']
 
         self.algo = CMAEvolutionStrategy(x0=self.x_start, sigma0=self.init_sigma, inopts=self.inopts)
         self.verbose = hyperparams.get('verbose', True)
 
         self.opts = []
 
-    def learn(self, total_timesteps):
+    def learn(self, total_timesteps, tb_dir):
         t = 1
         opt = 1e10
         print_freq = 10
-        
-        # logging into tensorboard
-        if self.env_name == "HoleReacher-v0":
-            filepath = 'data/HoleReacher'
-        elif self.env_name == "Reacher-v2":
-            filepath = 'data/ReacherFix'
-        else:
-            filepath = 'data/'
-        filename = os.listdir("./"+filepath)     
-        filename = list(filter(lambda x : 'cma' in x , filename))
-        if filename == []:
-            tensorboard_log = filepath +"/cma_" + str(1) + "/"
-        else: 
-            big_file = filename[0]
-            for n in range(len(filename)-1): 
-                if filename[n+1] > big_file:
-                    big_file = filename[n+1]
-            file_n = int(big_file[-1])+1
-            tensorboard_log = filepath + "/cma_" + str(file_n) + "/"
-        cma_writer = SummaryWriter(tensorboard_log)
-        print("Logging to" + "./" + tensorboard_log)
-        
+
+        tb_writer = SummaryWriter(tb_dir)
+        print("Tensorboard logging to", tb_dir)
+
+        env_steps_per_iteration = self.popsize * self.env.env_fns[0]().spec.max_episode_steps * self.env.num_envs
+
         # training the model
         while t <= total_timesteps and opt > 1e-8:
 
@@ -86,14 +72,10 @@ class CMA(Algo):
 
             opt = -self.env(self.algo.mean)[0][0]
             self.opts.append(opt)
-            
+
             # plotting the total rewards and last step reward
-            if self.env_name == "HoleReacher-v0":
-                cma_writer.add_scalar("iterations/reward_last_step", -opt, (t)*14*200*8)
-                cma_writer.add_scalar("iterations/itrations", t, (t)*14*200*8)
-            elif self.env_name == "Reacher-v2":
-                cma_writer.add_scalar("iterations/reward_last_step", -opt, (t)*14*50*8)
-                cma_writer.add_scalar("iterations/iterations", t, (t)*14*50*8)
+            tb_writer.add_scalar("iterations/reward_last_step", -opt, t*env_steps_per_iteration)
+            tb_writer.add_scalar("iterations/iterations", t, t*env_steps_per_iteration)
 
             t += 1
             
@@ -145,14 +127,10 @@ class PPO(Algo):
         self.env_name = env_name
         self.algo = sb3.PPO(env=env, **hyperparams)
 
-    def learn(self, total_timesteps):
-    
-        if self.env_name == 'InformedHoleReacher-v0':
-            self.algo.tensorboard_log = './data/' + "HoleReacher/"
-        elif self.env_name == 'FixedTargetReacher-v2':
-            self.algo.tensorboard_log = './data/' + "ReacherFix/"
-        else: 
-            self.algo.tensorboard_log = './data/'
+    def learn(self, total_timesteps, tb_dir):
+
+        print("Tensorboard logging to", tb_dir)
+        self.algo.tensorboard_log = tb_dir
         
         # training the model
         iteration = 0
@@ -160,19 +138,19 @@ class PPO(Algo):
         log_interval = 1
     
         total_timesteps, callback = self.algo._setup_learn(total_timesteps,
-                                    callback = None,
-                                    eval_env = None,
-                                    eval_freq = -1,
-                                    n_eval_episodes = 5,
-                                    tb_log_name = "PPO",
-                                    reset_num_timesteps = True,)
+                                                           callback=None,
+                                                           eval_env=None,
+                                                           eval_freq=-1,
+                                                           n_eval_episodes=5,
+                                                           tb_log_name=tb_dir,
+                                                           reset_num_timesteps=True,)
         
         callback.on_training_start(locals(), globals())
         
         while self.algo.num_timesteps < total_timesteps:
 
             continue_training = self.algo.collect_rollouts(self.algo.env, callback, self.algo.rollout_buffer,
-                                n_rollout_steps=self.algo.n_steps)
+                                                           n_rollout_steps=self.algo.n_steps)
 
             if continue_training is False:
                 break
@@ -192,20 +170,12 @@ class PPO(Algo):
                 logger.record("time/total_timesteps", self.algo.num_timesteps, exclude="tensorboard")
                 logger.dump(step=self.algo.num_timesteps)
                 
-                #TODO: plot the total rewards and last step reward in Tensorboard
-                if self.env_name == 'InformedHoleReacherWide-v0':
-                    logger.record("iterations/reward", self.algo.env.venv.envs[0].reward_plot)
-                    logger.record("iterations/reward_last_step", self.algo.env.venv.envs[0].reward_last)
-                    logger.record("iterations/iteration", iteration)
-                elif self.env_name == 'FixedTargetReacher-v2':
-                    reward_last = self.env.venv.envs[0].reward_last 
-                    logger.record("iterations/reward_last_step", reward_last)#self.algo.env.venv.envs[0].reward_last)
-                    logger.record("iterations/iteration", iteration)
+                # custom logging
+                logger.record("iterations/reward_last_step", np.mean(self.algo.env.get_attr('reward_last')))
+                logger.record("iterations/iteration", iteration)
 
             self.algo.train()
         callback.on_training_end()
-        
-        #self.algo.learn(total_timesteps=total_timesteps)
 
     def load_model(self, path):
         self.algo = sb3.PPO.load(path / 'model')
