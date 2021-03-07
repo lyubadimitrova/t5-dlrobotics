@@ -1,6 +1,4 @@
 import time
-import os
-from pathlib import Path
 import numpy as np
 import matplotlib.pyplot as plt
 import stable_baselines3 as sb3
@@ -52,7 +50,7 @@ class CMA(Algo):
         print_freq = 10
 
         tb_writer = SummaryWriter(tb_dir)
-        print("Tensorboard logging to", tb_dir)
+        print("Logging to", tb_dir)
 
         env_steps_per_iteration = self.popsize * self.env.env_fns[0]().spec.max_episode_steps * self.env.num_envs
 
@@ -129,7 +127,6 @@ class PPO(Algo):
 
     def learn(self, total_timesteps, tb_dir):
 
-        print("Tensorboard logging to", tb_dir)
         self.algo.tensorboard_log = tb_dir
         
         # training the model
@@ -142,7 +139,7 @@ class PPO(Algo):
                                                            eval_env=None,
                                                            eval_freq=-1,
                                                            n_eval_episodes=5,
-                                                           tb_log_name=tb_dir,
+                                                           tb_log_name='tb',
                                                            reset_num_timesteps=True,)
         
         callback.on_training_start(locals(), globals())
