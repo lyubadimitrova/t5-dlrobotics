@@ -1,4 +1,5 @@
 import time
+from pathlib import Path
 import numpy as np
 import matplotlib.pyplot as plt
 import stable_baselines3 as sb3
@@ -6,11 +7,12 @@ from stable_baselines3.common.evaluation import evaluate_policy
 from stable_baselines3.common.utils import safe_mean
 from stable_baselines3.common import logger
 from torch.utils.tensorboard import SummaryWriter
+from stable_baselines3.common.vec_env import VecNormalize
 from cma import CMAEvolutionStrategy
 
 
 class Algo:
-    def learn(self, total_timesteps, tb_dir):
+    def learn(self, total_timesteps, tb_dir, cont=False):
         raise NotImplementedError
 
     def save_model(self, path):
@@ -44,7 +46,7 @@ class CMA(Algo):
 
         self.opts = []
 
-    def learn(self, total_timesteps, tb_dir):
+    def learn(self, total_timesteps, tb_dir, cont=False):
         t = 1
         opt = 1e10
         print_freq = 10
@@ -125,29 +127,39 @@ class PPO(Algo):
         self.env_name = env_name
         self.algo = sb3.PPO(env=env, **hyperparams)
 
-    def learn(self, total_timesteps, tb_dir):
+    def learn(self, total_timesteps, tb_dir, cont=False):
 
-        self.algo.tensorboard_log = tb_dir
-        
         # training the model
         iteration = 0
         total_timesteps = int(total_timesteps)
         log_interval = 1
-    
+        reset_num_timesteps = not cont
+
+        if not cont:
+            self.algo.tensorboard_log = tb_dir
+
+        # TODO: continuing training
         total_timesteps, callback = self.algo._setup_learn(total_timesteps,
                                                            callback=None,
                                                            eval_env=None,
                                                            eval_freq=-1,
                                                            n_eval_episodes=5,
-                                                           tb_log_name='tb',
-                                                           reset_num_timesteps=True,)
-        
+                                                           # tb_log_name='tb',
+                                                           reset_num_timesteps=reset_num_timesteps,)
+
         callback.on_training_start(locals(), globals())
-        
+
         while self.algo.num_timesteps < total_timesteps:
 
             continue_training = self.algo.collect_rollouts(self.algo.env, callback, self.algo.rollout_buffer,
                                                            n_rollout_steps=self.algo.n_steps)
+
+            if self.algo.num_timesteps > 1e7 and self.algo.num_timesteps % 131072 == 0:   # every 8 iterations
+                p = Path(str(self.algo.num_timesteps))
+                p.mkdir(exist_ok=True)
+                self.save_model(p)
+                if isinstance(self.env, VecNormalize):
+                    self.env.save(p / 'vecnormalize.pkl')
 
             if continue_training is False:
                 break
@@ -174,8 +186,8 @@ class PPO(Algo):
             self.algo.train()
         callback.on_training_end()
 
-    def load_model(self, path):
-        self.algo = sb3.PPO.load(path / 'model')
+    def load_model(self, path, tb_path=''):
+        self.algo = sb3.PPO.load(path / 'model', tensorboard_log=tb_path)
 
     def save_model(self, path):
         self.algo.save(path / 'model')

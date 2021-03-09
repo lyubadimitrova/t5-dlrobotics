@@ -53,11 +53,22 @@ class Experiment:
 
     def load(self, model_path):
         self.model_dir = Path(model_path)
-        self.model.load_model(self.model_dir)
+        if isinstance(self.model, PPO):
+            self.tb_dir = self.model_dir / 'tb_1'
+        else:
+            self.tb_dir = self.model_dir
 
-    def run(self):
-        self.model_dir, self.tb_dir = make_experiment_dirs(self.cfg)
-        self.model.learn(self.total_timesteps, self.tb_dir)
+        self.model.load_model(self.model_dir, self.tb_dir)
+        try:
+            self.env = VecNormalize.load(self.model_dir / "vecnormalize.pkl", self.env)
+        except FileNotFoundError:
+            pass
+        self.model.algo.set_env(self.env)
+
+    def run(self, cont=False):
+        if not cont:
+            self.model_dir, self.tb_dir = make_experiment_dirs(self.cfg)
+        self.model.learn(self.total_timesteps, self.tb_dir, cont)
         self.save()
 
     def save(self):
