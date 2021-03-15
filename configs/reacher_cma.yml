@@ -8,9 +8,9 @@ env_params:
     - t5.wrappers.CmaReacherWrapper
     - alr_envs.utils.dmp_env_wrapper.DmpEnvWrapper
   wrapper_params:
-    - ''
+    - 'reward_ctrl_scale:0.01 goal_pos:[0.1,-0.1]'
     - 'num_dof:2 num_basis:5 duration:1 learn_goal:True policy_type:"motor" alpha_phase:3 p_gains:0.1 d_gains:0.1'
-  n_envs: 8
+  n_envs: 1
   vecenv_params:
     n_samples: 14
     context: 'spawn'
@@ -22,8 +22,9 @@ algo_params:
   inopts:
     popsize: 14
   init_sigma: 0.1
+  x_start_goal: [np.pi/2, -np.pi/4]
 
-n_timesteps: 20
+n_timesteps: 400
 
 
 

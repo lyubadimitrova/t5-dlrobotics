@@ -34,10 +34,10 @@ class CMA(Algo):
         if hyperparams.get('x_start', False):
             self.x_start = hyperparams['x_start']
         else:
-            self.x_start = self._get_xstart()
+            self.x_start = self._get_xstart(hyperparams.get('x_start_goal'))
 
         self.inopts = hyperparams.get('inopts', None)
-        self.popsize = self.inopts['popsize']
+        self.popsize = self.inopts['popsize']  # TODO: what if no inopts given?
 
         self.algo = CMAEvolutionStrategy(x0=self.x_start, sigma0=self.init_sigma, inopts=self.inopts)
         self.verbose = hyperparams.get('verbose', True)
@@ -63,12 +63,12 @@ class CMA(Algo):
             # sample parameters to test
             solutions = self.algo.ask()
             # collect rollouts with parameters, need to negate because cma-es minimizes
-            fitness = -self.env(np.vstack(solutions))[
-                0]  # fitness is the reward, [0] because rollout now returns infos as well
+            fitness = -self.env(np.vstack(solutions))[0]    # fitness is the reward,
+                                                            # [0] because rollout now returns infos as well
             # update search distribution
             self.algo.tell(solutions, fitness)
 
-            opt = -self.env(self.algo.mean)[0][0]
+            opt = -self.env(self.algo.mean)[0][0]    # first [0] because rollout, second [0] to get value not array
             self.opts.append(opt)
 
             # plotting the total rewards and last step reward
@@ -77,13 +77,17 @@ class CMA(Algo):
 
             t += 1
             
-    def _get_xstart(self):
+    def _get_xstart(self, x_start_goal):
+
         dummy_env = self.env.env_fns[0]()
         x_start = self.init_sigma * np.random.randn(dummy_env.dim)
         if dummy_env.dim > dummy_env.num_basis * dummy_env.num_dof:
-            x_start[-dummy_env.num_dof] = np.pi / 2
-            for i in range(-dummy_env.num_dof + 1, 0):
-                x_start[i] = -np.pi / 4
+            if x_start_goal is None:
+                x_start[-dummy_env.num_dof] = np.pi / 2
+                for i in range(-dummy_env.num_dof + 1, 0):
+                    x_start[i] = -np.pi / 4
+            else:
+                x_start[-dummy_env.num_dof:] = [eval(angle) for angle in x_start_goal]
 
         return x_start
 
