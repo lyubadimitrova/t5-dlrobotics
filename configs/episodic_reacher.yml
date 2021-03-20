@@ -1,0 +1,28 @@
+name: "ep-reacher"
+overwrite: True
+save_path: "experiments"
+
+env: "EpisodicReacher-v2"
+env_params:
+  wrappers:
+    - alr_envs.utils.dmp_env_wrapper.DmpEnvWrapper
+  wrapper_params:
+    - 'num_dof:2 num_basis:5 learn_goal:True policy_type:"motor" alpha_phase:3 p_gains:0.1 d_gains:0.1'
+  n_envs: 1
+  vecenv_params:
+    n_samples: 14
+    context: 'spawn'
+    shared_memory: False
+    worker: alr_envs.utils.dmp_async_vec_env._worker
+
+algorithm: "cma"
+algo_params:
+  inopts:
+    popsize: 14
+  init_sigma: 0.1
+  x_start_goal: [np.pi/2, -np.pi/4]
+
+n_timesteps: 200
+
+
+
