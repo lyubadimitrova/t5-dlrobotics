@@ -68,11 +68,16 @@ class CMA(Algo):
             # update search distribution
             self.algo.tell(solutions, fitness)
 
-            opt = -self.env(self.algo.mean)[0][0]    # first [0] because rollout, second [0] to get value not array
+            rew, infos = self.env(self.algo.mean)
+            opt = -rew[0]    # [0] to get value not array, negate to minimize
             self.opts.append(opt)
 
+            reward_last = infos[0]['reward_last']
+            reward_sum = infos[0]['reward_sum']
+
             # plotting the total rewards and last step reward
-            tb_writer.add_scalar("iterations/reward_last_step", -opt, t*env_steps_per_iteration)
+            tb_writer.add_scalar("iterations/reward_last_step", reward_last, t*env_steps_per_iteration)
+            tb_writer.add_scalar("iterations/mean_episode_reward", reward_sum, t*env_steps_per_iteration)
             tb_writer.add_scalar("iterations/iterations", t, t*env_steps_per_iteration)
 
             t += 1
@@ -169,11 +174,14 @@ class PPO(Algo):
                 logger.record("time/fps", fps)
                 logger.record("time/time_elapsed", int(time.time() - self.algo.start_time), exclude="tensorboard")
                 logger.record("time/total_timesteps", self.algo.num_timesteps, exclude="tensorboard")
-                logger.dump(step=self.algo.num_timesteps)
-                
+
                 # custom logging
-                logger.record("iterations/reward_last_step", np.mean(self.algo.env.get_attr('reward_last')))
+                reward_last = np.mean(self.algo.env.get_attr('reward_last'))
+                logger.record("iterations/reward_last_step", reward_last)
+                mean_ep_reward = np.mean(self.algo.env.get_attr('reward_sum'))
+                logger.record("iterations/mean_episode_reward", mean_ep_reward)
                 logger.record("iterations/iteration", iteration)
+                logger.dump(step=self.algo.num_timesteps)
 
             self.algo.train()
         callback.on_training_end()
@@ -188,3 +196,30 @@ class PPO(Algo):
         reward, _ = evaluate_policy(self.algo, test_env,
                                     n_eval_episodes=1, render=True, deterministic=True, warn=False)
         return reward
+
+# if reward_last >= -0.00001:
+#     print('0.00001   ', self.algo.num_timesteps)
+# elif reward_last >= -0.0001:
+#     print('0.0001   ', self.algo.num_timesteps)
+# elif reward_last >= -0.0005:
+#     print('0.0005   ', self.algo.num_timesteps)
+# elif reward_last >= -0.001:
+#     print('0.001   ', self.algo.num_timesteps)
+# elif reward_last >= -0.005:
+#     print('0.005   ', self.algo.num_timesteps)
+# elif reward_last >= -0.01:
+#     print('0.01   ', self.algo.num_timesteps)
+
+
+# if reward_last >= -0.00001:
+#     print('0.00001   ', t*env_steps_per_iteration)
+# elif reward_last >= -0.0001:
+#     print('0.0001   ', t*env_steps_per_iteration)
+# elif reward_last >= -0.0005:
+#     print('0.0005   ', t * env_steps_per_iteration)
+# elif reward_last >= -0.001:
+#     print('0.001   ', t * env_steps_per_iteration)
+# elif reward_last >= -0.005:
+#     print('0.005   ', t * env_steps_per_iteration)
+# elif reward_last >= -0.01:
+#     print('0.01   ', t * env_steps_per_iteration)
