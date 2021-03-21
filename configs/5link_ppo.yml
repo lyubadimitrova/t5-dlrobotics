@@ -1,0 +1,29 @@
+name: "5l-ppo"
+save_path: "experiments"
+
+env: 'FixedTargetReacher-v2'
+env_params:
+  wrappers:
+    - sb3_contrib.common.wrappers.TimeFeatureWrapper
+    - stable_baselines3.common.vec_env.VecNormalize
+  wrapper_params:
+    - ''
+    - 'gamma:0.99'
+  n_envs: 8
+  
+algorithm: "ppo"   
+algo_params: 
+  policy: 'MlpPolicy'
+  batch_size: 256
+  n_steps: 128
+  gamma: 0.95
+  gae_lambda: 0.99
+  n_epochs: 20
+  ent_coef: 0.0
+  learning_rate: 0.001
+  clip_range: 0.2
+  max_grad_norm: 5
+  vf_coef: 0.2
+  verbose: 1
+
+n_timesteps: 3.e+5
