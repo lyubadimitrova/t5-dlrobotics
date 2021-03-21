@@ -3,7 +3,6 @@ import importlib
 import shutil
 import time
 import yaml
-import sys
 from pathlib import Path
 from stable_baselines3.common.vec_env import VecNormalize
 
@@ -61,7 +60,10 @@ class Experiment:
         self.save()
 
     def save(self):
+
         shutil.copyfile(self.cfg_path, self.model_dir / 'config.yml')
+        with (self.model_dir / 'env_spec.txt').open(mode='w') as f:
+            f.write(str(self.env.env_fns[0]().spec.__dict__))
 
         self.model.save_model(self.model_dir)
         if isinstance(self.env, VecNormalize):
@@ -80,13 +82,6 @@ class Experiment:
             if 'vec' not in self.wrappers[i].lower():  # ignore vecenv wrappers for now
                 env = self.built_wrappers[i](env, **self.built_wrapper_params[i])
         return env
-
-    # def build_env_from_string_or_custom(self):
-    #     try:
-    #         env = resolve_import(self.env_name)()   # custom env can be imported; TODO: register custom envs
-    #     except NameError:
-    #         env = gym.make(self.env_name)
-    #     return env
 
     def parse_wrappers(self):
         for i in range(len(self.wrappers)):
@@ -171,4 +166,5 @@ def make_experiment_dirs(cfg):
     # tb_dir = model_dir / 'tensorboard'
     # tb_dir.mkdir(exist_ok=exist_ok)
 
-    return model_dir, model_dir #tb_dir
+    return model_dir, model_dir
+
